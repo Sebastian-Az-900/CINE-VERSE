@@ -78,39 +78,94 @@
         if (!existing.genres.includes(genre)) existing.genres.push(genre);
         return;
       }
-
       const movie = {
-        id: nextId++,
-        title,
-        year,
-        rating: null,
-        duration: "No disponible",
-        genres: [genre],
-        poster: posterFallback(title),
-        backdrop: posterFallback(title),
+        id: nextId++, title, year, rating: null, duration: "No disponible",
+        genres: [genre], poster: posterFallback(title), backdrop: posterFallback(title),
         overview: `${title} forma parte de nuestra selección de ${genre.toLocaleLowerCase("es")}. Abre la ficha para consultar la información disponible.`,
-        director: "Información no disponible",
-        cast: "Información no disponible"
+        director: "Información no disponible", cast: "Información no disponible"
       };
       movies.push(movie);
       existingByTitle.set(normalize(title), movie);
     });
   });
 
-  // Cada categoría muestra hasta 20 películas desde el primer clic; el botón
-  // «Explorar más» permite continuar con el resto del catálogo.
-  const baseRenderMovies = renderMovies;
+  // Buscar automáticamente la miniatura asociada a cada película en Wikipedia.
+  // El arte SVG local se conserva como reserva si la búsqueda no encuentra póster.
+  const posterCache = new Map();
+  const posterRequests = new Map();
+
+  async function findPoster(title) {
+    const key = normalize(title);
+    if (posterCache.has(key)) return posterCache.get(key);
+    if (posterRequests.has(key)) return posterRequests.get(key);
+
+    const request = (async () => {
+      try {
+        const params = new URLSearchParams({
+          action: "query",
+          generator: "search",
+          gsrsearch: `${title} film movie poster`,
+          gsrnamespace: "0",
+          gsrlimit: "1",
+          prop: "pageimages",
+          piprop: "thumbnail",
+          pithumbsize: "500",
+          format: "json",
+          origin: "*"
+        });
+        const response = await fetch(`https://en.wikipedia.org/w/api.php?${params}`);
+        if (!response.ok) return null;
+        const data = await response.json();
+        const pages = Object.values(data.query?.pages || {});
+        const image = pages[0]?.thumbnail?.source || null;
+        posterCache.set(key, image);
+        return image;
+      } catch {
+        posterCache.set(key, null);
+        return null;
+      } finally {
+        posterRequests.delete(key);
+      }
+    })();
+
+    posterRequests.set(key, request);
+    return request;
+  }
+
+  async function hydratePoster(image) {
+    if (!image || image.dataset.posterLookup === "done") return;
+    image.dataset.posterLookup = "done";
+    const poster = await findPoster(image.dataset.fallback || image.alt.replace(/^Póster de /, ""));
+    if (poster && image.isConnected) image.src = poster;
+  }
+
+  // Los pósteres recién agregados parten del arte local y buscan una portada real.
+  const previousRender = renderMovies;
+  renderMovies = function () {
+    previousRender();
+    movieGrid.querySelectorAll(".poster-image").forEach((image) => {
+      const movieCard = image.closest(".movie-card");
+      const movie = movies.find((item) => item.id === Number(movieCard?.dataset.id));
+      if (movie && (movie.id >= 26 || movie.poster.startsWith("data:image/"))) {
+        hydratePoster(image);
+      }
+    });
+  };
+
+  // Si un póster existente de TMDB no carga, buscar una portada alternativa.
+  document.addEventListener("error", (event) => {
+    const image = event.target;
+    if (image instanceof HTMLImageElement && image.classList.contains("poster-image")) {
+      hydratePoster(image);
+    }
+  }, true);
+
+  // Renderizar tarjetas con sinopsis y botones de detalle/tráiler.
   renderMovies = function () {
     const filtered = getFilteredMovies();
     const visible = filtered.slice(0, visibleCount);
     const query = searchInput.value.trim();
-    resultsTitle.textContent = favoritesOnly
-      ? "Tu colección personal"
-      : query
-        ? "Resultados de búsqueda"
-        : activeGenre === "Todas"
-          ? "Películas para descubrir"
-          : activeGenre;
+    resultsTitle.textContent = favoritesOnly ? "Tu colección personal" : query ? "Resultados de búsqueda" : activeGenre === "Todas" ? "Películas para descubrir" : activeGenre;
     resultsCount.textContent = `${filtered.length} ${filtered.length === 1 ? "película" : "películas"}`;
     emptyState.hidden = filtered.length !== 0;
     movieGrid.hidden = filtered.length === 0;
@@ -121,19 +176,11 @@
       const ratingLabel = Number.isFinite(movie.rating) ? `★ ${movie.rating.toFixed(1)}` : "★ Sin valoración";
       return `
         <article class="movie-card" data-id="${movie.id}">
-          <div class="poster-wrap" data-action="details" data-id="${movie.id}"
-               tabindex="0" role="button" aria-label="Ver información de ${escapeHTML(movie.title)}">
-            <img class="poster-image" src="${escapeHTML(movie.poster)}"
-                 alt="Póster de ${escapeHTML(movie.title)}" loading="lazy"
-                 data-fallback="${escapeHTML(movie.title)}">
+          <div class="poster-wrap" data-action="details" data-id="${movie.id}" tabindex="0" role="button" aria-label="Ver información de ${escapeHTML(movie.title)}">
+            <img class="poster-image" src="${escapeHTML(movie.poster)}" alt="Póster de ${escapeHTML(movie.title)}" loading="lazy" data-fallback="${escapeHTML(movie.title)}">
             <div class="poster-gradient"></div>
             <span class="movie-rating">${ratingLabel}</span>
-            <button class="favorite-btn ${isFavorite ? "is-favorite" : ""}"
-                    data-action="favorite" data-id="${movie.id}"
-                    aria-label="${isFavorite ? "Quitar de" : "Añadir a"} favoritos"
-                    aria-pressed="${isFavorite}" title="${isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}">
-              ${isFavorite ? "♥" : "♡"}
-            </button>
+            <button class="favorite-btn ${isFavorite ? "is-favorite" : ""}" data-action="favorite" data-id="${movie.id}" aria-label="${isFavorite ? "Quitar de" : "Añadir a"} favoritos" aria-pressed="${isFavorite}" title="${isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}">${isFavorite ? "♥" : "♡"}</button>
             <span class="card-play" aria-hidden="true">▶</span>
           </div>
           <div class="card-info">
@@ -147,14 +194,18 @@
           </div>
         </article>`;
     }).join("");
+
+    // Recién se insertaron los nodos: inicia la búsqueda de portada.
+    movieGrid.querySelectorAll(".poster-image").forEach((image) => {
+      const movie = movies.find((item) => item.id === Number(image.closest(".movie-card")?.dataset.id));
+      if (movie && (movie.id >= 26 || movie.poster.startsWith("data:image/"))) hydratePoster(image);
+    });
   };
 
-  // No inventar puntuaciones en las fichas de películas sin valoración.
   const baseOpenMovieDetails = openMovieDetails;
   openMovieDetails = function (id) {
     const movie = getMovie(id);
-    const hasRating = movie && Number.isFinite(movie.rating);
-    if (!hasRating) {
+    if (movie && !Number.isFinite(movie.rating)) {
       movie.rating = 0;
       baseOpenMovieDetails(id);
       movie.rating = null;
@@ -165,14 +216,12 @@
     baseOpenMovieDetails(id);
   };
 
-  // Interceptar el clic después del filtro original para renderizar 20 tarjetas.
+  // Mostrar al menos 20 resultados al entrar en una categoría.
   genreFilters.addEventListener("click", (event) => {
     if (!event.target.closest("[data-genre]")) return;
     visibleCount = 20;
     window.setTimeout(refreshCatalog, 0);
   });
-
-  // El botón de navegación superior activa el filtro y mantiene el mismo mínimo.
   document.querySelectorAll("[data-genre-link]").forEach((link) => {
     link.addEventListener("click", () => {
       visibleCount = 20;
@@ -180,8 +229,41 @@
     });
   });
 
-  // Mantener la referencia para que el catálogo use la versión extendida.
-  void baseRenderMovies;
+  movieGrid.addEventListener("click", (event) => {
+    const button = event.target.closest('[data-action="trailer"]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    playTrailer(button.dataset.id);
+  });
+
+  // Carrusel de portada con controles manuales y avance automático.
+  const pagination = document.querySelector("#heroPagination");
+  const heroIds = [1, 3, 18];
+  pagination.innerHTML = heroIds.map((_, index) => `<button class="pagination-line ${index === 0 ? "active" : ""}" type="button" data-hero="${index}" aria-label="Mostrar película destacada ${index + 1}" aria-current="${index === 0 ? "true" : "false"}"></button>`).join("");
+  let carouselTimer;
+  const restartCarousel = () => {
+    window.clearInterval(carouselTimer);
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) carouselTimer = window.setInterval(() => renderHero(heroIndex + 1), 7000);
+  };
+  document.querySelector("#heroPrev").addEventListener("click", () => { renderHero(heroIndex - 1); restartCarousel(); });
+  document.querySelector("#heroNext").addEventListener("click", () => { renderHero(heroIndex + 1); restartCarousel(); });
+  pagination.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-hero]");
+    if (button) { renderHero(Number(button.dataset.hero)); restartCarousel(); }
+  });
+  const originalRenderHero = renderHero;
+  renderHero = function (index = 0) {
+    originalRenderHero(index);
+    pagination.querySelectorAll("[data-hero]").forEach((button, buttonIndex) => {
+      const active = buttonIndex === heroIndex;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-current", String(active));
+    });
+  };
+
   visibleCount = 20;
+  renderHero(0);
   refreshCatalog();
+  restartCarousel();
 })();
