@@ -15,9 +15,10 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="enhancements.css?v=4">
+  <script src="script.js?v=4" defer></script>
+  <script src="site-enhancements.js?v=4" defer></script>
 </head>
 
 <body>
@@ -27,11 +28,11 @@
       CINE<span>VERSE</span>
     </a>
 
-    <nav class="nav" id="mainNav">
+    <nav class="nav" id="mainNav" aria-label="Navegación principal">
       <a href="#inicio" class="nav-link active">Inicio</a>
       <a href="#catalogo" class="nav-link">Películas</a>
       <a href="#catalogo" class="nav-link" data-genre-link="Acción">Acción</a>
-      <a href="#catalogo" class="nav-link" data-genre-link="Ciencia ficción">Ciencia ficción</a>
+      <a href="#catalogo" class="nav-link" data-genre-link="Animación">Animación</a>
     </nav>
 
     <div class="header-actions">
@@ -42,59 +43,44 @@
           <path d="m16 16 5 5"></path>
         </svg>
       </button>
-
       <button class="profile-button" id="favoritesShortcut"
               title="Ver favoritos" aria-label="Ver favoritos">
         <span>♥</span>
       </button>
-
       <button class="menu-toggle" id="menuToggle"
               aria-label="Abrir menú" aria-expanded="false">☰</button>
     </div>
   </header>
 
   <main>
-    <section class="hero" id="inicio">
+    <section class="hero" id="inicio" aria-label="Películas destacadas">
       <div class="hero-background" id="heroBackground"></div>
       <div class="hero-shade"></div>
-
       <div class="hero-content">
         <span class="eyebrow">
           <span class="live-dot"></span>
           TU PRÓXIMA HISTORIA COMIENZA AQUÍ
         </span>
-
         <p class="hero-kicker" id="heroKicker">DESTACADA DE LA SEMANA</p>
         <h1 id="heroTitle">El universo<br>te espera.</h1>
-
         <div class="hero-meta" id="heroMeta">
           <span class="rating">★ 8.5</span>
           <span>2025</span>
           <span>Ciencia ficción</span>
           <span>2h 08min</span>
         </div>
-
         <p class="hero-description" id="heroDescription">
           Descubre mundos extraordinarios, personajes inolvidables y
           aventuras que te llevarán más allá de la imaginación.
         </p>
-
         <div class="hero-buttons">
-          <button class="btn btn-primary" id="heroPlay">
-            <span>▶</span> Ver tráiler
-          </button>
-          <button class="btn btn-secondary" id="heroDetails">
-            Más información <span>＋</span>
-          </button>
+          <button class="btn btn-primary" id="heroPlay"><span>▶</span> Ver tráiler</button>
+          <button class="btn btn-secondary" id="heroDetails">Más información <span>＋</span></button>
         </div>
       </div>
-
-      <div class="hero-pagination">
-        <span class="pagination-line active"></span>
-        <span class="pagination-line"></span>
-        <span class="pagination-line"></span>
-      </div>
-
+      <button class="hero-arrow hero-prev" id="heroPrev" type="button" aria-label="Película destacada anterior">‹</button>
+      <button class="hero-arrow hero-next" id="heroNext" type="button" aria-label="Película destacada siguiente">›</button>
+      <div class="hero-pagination" id="heroPagination" aria-label="Elegir película destacada"></div>
       <div class="hero-counter">01 <span>/</span> 03</div>
     </section>
 
@@ -103,11 +89,8 @@
         <div>
           <span class="section-label">EXPLORA EL CATÁLOGO</span>
           <h2>Encuentra tu próxima <span>obsesión.</span></h2>
-          <p class="section-subtitle">
-            Grandes historias, listas para descubrir.
-          </p>
+          <p class="section-subtitle">Grandes historias, listas para descubrir.</p>
         </div>
-
         <button class="text-button" id="favoritesFilter">
           ♥ Mis favoritos <span id="favoriteCount">0</span>
         </button>
@@ -120,22 +103,23 @@
             <path d="m16 16 5 5"></path>
           </svg>
           <input id="searchInput" type="search"
-                 placeholder="Busca películas por título..."
+                 placeholder="Busca películas, géneros o directores..."
                  autocomplete="off">
           <kbd>BUSCAR</kbd>
         </label>
       </div>
 
       <div class="catalog-toolbar">
-        <div class="genre-filters" id="genreFilters">
-          <button class="filter-chip active" data-genre="Todas">Todas</button>
-          <button class="filter-chip" data-genre="Acción">Acción</button>
-          <button class="filter-chip" data-genre="Aventura">Aventura</button>
-          <button class="filter-chip" data-genre="Ciencia ficción">Ciencia ficción</button>
-          <button class="filter-chip" data-genre="Drama">Drama</button>
-          <button class="filter-chip" data-genre="Animación">Animación</button>
+        <div class="genre-filters" id="genreFilters" aria-label="Filtrar por género">
+          <button class="filter-chip active" data-genre="Todas" type="button">Todas</button>
+          <button class="filter-chip" data-genre="Acción" type="button">Acción</button>
+          <button class="filter-chip" data-genre="Aventura" type="button">Aventura</button>
+          <button class="filter-chip" data-genre="Ciencia ficción" type="button">Ciencia ficción</button>
+          <button class="filter-chip" data-genre="Drama" type="button">Drama</button>
+          <button class="filter-chip" data-genre="Animación" type="button">Animación</button>
+          <button class="filter-chip" data-genre="Comedia" type="button">Comedia</button>
+          <button class="filter-chip" data-genre="Suspenso" type="button">Suspenso</button>
         </div>
-
         <label class="sort-control">
           <span>Ordenar:</span>
           <select id="sortSelect">
@@ -151,34 +135,28 @@
         <h3 id="resultsTitle">Películas para descubrir</h3>
         <span id="resultsCount">Cargando catálogo...</span>
       </div>
-
       <div class="movie-grid" id="movieGrid" aria-live="polite">
         <div class="loading-state">Preparando tu próxima sesión de cine...</div>
       </div>
-
       <div class="empty-state" id="emptyState" hidden>
         <div class="empty-icon">⌕</div>
         <h3>No encontramos esa película</h3>
         <p>Prueba con otro título o selecciona un género diferente.</p>
-        <button class="btn btn-primary" id="resetFilters">Ver todo el catálogo</button>
+        <button class="btn btn-primary" id="resetFilters" type="button">Ver todo el catálogo</button>
       </div>
-
       <div class="load-more-wrap">
-        <button class="btn btn-outline" id="loadMore">
+        <button class="btn btn-outline" id="loadMore" type="button">
           Explorar más películas <span>↓</span>
         </button>
       </div>
     </section>
 
-    <section class="promo section-wrap">
+    <section class="promo section-wrap" aria-label="Tu colección de películas">
       <div class="promo-content">
         <span class="section-label">TU CINE, A TU MANERA</span>
         <h2>Las historias que amas.<br><span>En un solo lugar.</span></h2>
-        <p>
-          Guarda tus favoritas, explora nuevos géneros y crea
-          tu propia colección de películas.
-        </p>
-        <button class="btn btn-primary" id="exploreButton">
+        <p>Guarda tus favoritas, explora nuevos géneros y crea tu propia colección de películas.</p>
+        <button class="btn btn-primary" id="exploreButton" type="button">
           Explorar catálogo <span>→</span>
         </button>
       </div>
@@ -193,50 +171,37 @@
   </main>
 
   <footer class="footer">
-    <a class="logo" href="#inicio">
-      <span class="logo-icon">▶</span>
-      CINE<span>VERSE</span>
-    </a>
-
+    <a class="logo" href="#inicio"><span class="logo-icon">▶</span>CINE<span>VERSE</span></a>
     <p>Tu universo de películas. Un mundo de historias.</p>
-    <p class="footer-note">
-      Proyecto de demostración. Las películas, imágenes y valoraciones
-      pertenecen a sus respectivos titulares.
-    </p>
+    <p class="footer-note">Proyecto de demostración. Las películas, imágenes y valoraciones pertenecen a sus respectivos titulares.</p>
     <span class="copyright">© <span id="currentYear"></span> CineVerse</span>
   </footer>
 
-  <!-- Ventana de detalles -->
-  <dialog class="movie-dialog" id="movieDialog">
-    <button class="dialog-close" id="closeDialog"
-            aria-label="Cerrar ventana">✕</button>
+  <dialog class="movie-dialog" id="movieDialog" aria-labelledby="dialogTitle">
+    <button class="dialog-close" id="closeDialog" type="button" aria-label="Cerrar ventana">✕</button>
     <div class="dialog-backdrop" id="dialogBackdrop"></div>
-
     <div class="dialog-body">
       <div class="dialog-poster-wrap">
         <img id="dialogPoster" src="" alt="Póster de la película">
       </div>
-
       <div class="dialog-info">
         <span class="section-label">FICHA DE LA PELÍCULA</span>
         <h2 id="dialogTitle">Título de la película</h2>
         <div class="dialog-meta" id="dialogMeta"></div>
         <p id="dialogOverview"></p>
-
+        <p class="dialog-credit"><strong>Dirección:</strong> <span id="dialogDirector"></span></p>
+        <p class="dialog-credit"><strong>Reparto:</strong> <span id="dialogCast"></span></p>
         <div class="dialog-genres" id="dialogGenres"></div>
-
         <div class="dialog-actions">
-          <button class="btn btn-primary" id="dialogPlay">▶ Ver tráiler</button>
-          <button class="btn btn-secondary" id="dialogFavorite">♡ Favorito</button>
+          <button class="btn btn-primary" id="dialogPlay" type="button">▶ Ver tráiler</button>
+          <button class="btn btn-secondary" id="dialogFavorite" type="button">♡ Favorito</button>
         </div>
       </div>
     </div>
   </dialog>
 
-  <!-- Reproductor de tráiler -->
-  <dialog class="video-dialog" id="videoDialog">
-    <button class="dialog-close video-close" id="closeVideo"
-            aria-label="Cerrar reproductor">✕</button>
+  <dialog class="video-dialog" id="videoDialog" aria-label="Reproductor de tráiler">
+    <button class="dialog-close video-close" id="closeVideo" type="button" aria-label="Cerrar reproductor">✕</button>
     <div class="video-container" id="videoContainer">
       <p>Selecciona una película para ver su tráiler.</p>
     </div>
